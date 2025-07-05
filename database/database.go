@@ -18,14 +18,29 @@ var DB *gorm.DB
 func InitDB() {
 	// 1. 优先从环境变量获取配置
 	dbHost := os.Getenv("DB_HOST")
+	if dbHost == "" {
+		dbHost = "10.6.109.205"
+	}
 
 	dbPort := os.Getenv("DB_PORT")
+	if dbPort == "" {
+		dbPort = "3306"
+	}
 
 	dbUser := os.Getenv("DB_USER")
+	if dbUser == "" {
+		dbUser = "root"
+	}
 
 	dbPass := os.Getenv("DB_PASSWORD")
+	if dbPass == "" {
+		dbPass = "a893782064A!"
+	}
 
 	dbName := os.Getenv("DB_NAME")
+	if dbName == "" {
+		dbName = "appointment_db"
+	}
 
 	// 2. 构建DSN（添加关键参数）
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?"+
