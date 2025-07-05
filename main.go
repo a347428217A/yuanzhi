@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -22,7 +23,7 @@ import (
 // @title Appointment System API
 // @version 1.0
 // @description 预约系统API文档
-// @host localhost:8080
+// @host http://user-go-api-171613-8-1367826874.sh.run.tcloudbase.com
 // @BasePath /
 // @securityDefinitions.apikey ApiKeyAuth
 // @in header
@@ -59,7 +60,22 @@ func main() {
 		})
 	})
 
+	//router.Use(func(c *gin.Context) {
+	//	if c.Request.Header.Get("X-Forwarded-Proto") == "http" {
+	//		target := "https://" + c.Request.Host + c.Request.URL.Path
+	//		c.Redirect(http.StatusMovedPermanently, target)
+	//		return
+	//	}
+	//	c.Next()
+	//})
+
 	router.Use(func(c *gin.Context) {
+		// 跳过所有 API 路由（只重定向非 API 请求）
+		if strings.HasPrefix(c.Request.URL.Path, "/api") {
+			c.Next()
+			return
+		}
+
 		if c.Request.Header.Get("X-Forwarded-Proto") == "http" {
 			target := "https://" + c.Request.Host + c.Request.URL.Path
 			c.Redirect(http.StatusMovedPermanently, target)
