@@ -1,24 +1,21 @@
 package routes
 
 import (
-	"admin-api/config"
 	"admin-api/controllers/merchant"
 	"admin-api/middlewares"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 )
 
-func InitRouterMerchant() *gin.Engine {
-	router := gin.New()
-	// 跌机恢复
-	router.Use(gin.Recovery())
-	router.Use(middlewares.Cors())
-	router.StaticFS(config.Config.ImageSettings.UploadDir, http.Dir(config.Config.ImageSettings.UploadDir))
-	//router.Use(middlewares.Logger())
-	SetupMerchantRoutes(router)
-	return router
-}
+//func InitRouterMerchant() *gin.Engine {
+//	router := gin.New()
+//	// 跌机恢复
+//	router.Use(gin.Recovery())
+//	router.Use(middlewares.Cors())
+//	router.StaticFS(config.Config.ImageSettings.UploadDir, http.Dir(config.Config.ImageSettings.UploadDir))
+//	//router.Use(middlewares.Logger())
+//	SetupMerchantRoutes(router)
+//	return router
+//}
 
 func SetupMerchantRoutes(r *gin.Engine) {
 	// 商家端认证

@@ -827,7 +827,7 @@ definitions:
       msg:
         type: string
     type: object
-host: localhost:8080
+host: user-go-api-171613-8-1367826874.sh.run.tcloudbase.com
 info:
   contact: {}
   description: 预约系统API文档

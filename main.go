@@ -22,33 +22,57 @@ import (
 // @title Appointment System API
 // @version 1.0
 // @description 预约系统API文档
-// @host localhost:8080
+// @host user-go-api-171613-8-1367826874.sh.run.tcloudbase.com
 // @BasePath /
 // @securityDefinitions.apikey ApiKeyAuth
 // @in header
 // @name Authorization
 func main() {
-	// 1. 从环境变量获取端口
+	// 1. 从环境变量获取端口（使用80端口）
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "80" // 云托管必须使用80端口
 		log.Printf("⚠️ 使用默认端口: %s", port)
 	} else {
 		log.Printf("✅ 使用环境变量端口: %s", port)
 	}
 
-	// 2. 创建唯一的路由器实例
+	// 2. 创建路由器实例
 	router := gin.Default()
 
+	// 3. 添加请求日志中间件（用于调试）
+	router.Use(func(c *gin.Context) {
+		start := time.Now()
+		path := c.Request.URL.Path
+
+		c.Next()
+
+		latency := time.Since(start)
+		log.Printf("[ROUTE] %s %s | %d | %v",
+			c.Request.Method,
+			path,
+			c.Writer.Status(),
+			latency)
+	})
+
+	// 4. 全局CORS中间件
 	router.Use(middlewares.Cors())
 
-	// 3. 添加健康检查端点（必须放在最前面）
+	// 5. 初始化数据库
+	database.InitDB()
+	log.Println("✅ 数据库初始化完成")
+
+	// 6. 注册业务路由（必须先于健康检查！）
+	routes.SetupCustomerRoutes(router)
+	routes.SetupMerchantRoutes(router)
+	routes.SetupInternalRoutes(router)
+
+	// 7. 添加健康检查端点
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok", "service": "admin-api"})
 	})
 
 	router.GET("/health", func(c *gin.Context) {
-		// 添加数据库健康检查
 		dbStatus := "ok"
 		if err := database.DB.Exec("SELECT 1").Error; err != nil {
 			dbStatus = "error: " + err.Error()
@@ -59,47 +83,31 @@ func main() {
 		})
 	})
 
-	//router.Use(func(c *gin.Context) {
-	//	if c.Request.Header.Get("X-Forwarded-Proto") == "http" {
-	//		target := "https://" + c.Request.Host + c.Request.URL.Path
-	//		c.Redirect(http.StatusMovedPermanently, target)
-	//		return
-	//	}
-	//	c.Next()
-	//})
-
-	// 4. 初始化数据库
-	database.InitDB()
-	log.Println("✅ 数据库初始化完成")
-
-	// 5. 设置路由
+	// 8. 注册Swagger路由（最后注册）
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	routes.SetupCustomerRoutes(router) // 使用同一个router实例
-	routes.SetupMerchantRoutes(router)
-	routes.SetupInternalRoutes(router)
 
-	// 6. 创建HTTP服务器
+	// 9. 创建HTTP服务器
 	server := &http.Server{
-		Addr:    ":" + port,
-		Handler: router, // 使用同一个router
-		// 超时设置保持不变...
+		Addr:    "0.0.0.0:" + port, // 监听所有接口
+		Handler: router,
 	}
 
-	// 7. 启动服务器
-	go func() {
-		log.Printf("🚀 服务启动在 http://0.0.0.0:%s", port)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("❌ 服务器启动失败: %v", err)
-		}
-	}()
-
+	// 10. 打印所有注册的路由
 	log.Println("===== 注册的路由 =====")
 	for _, route := range router.Routes() {
 		log.Printf("%-6s %s", route.Method, route.Path)
 	}
 	log.Println("======================")
 
-	// 8. 优雅关闭
+	// 11. 启动服务器
+	go func() {
+		log.Printf("🚀 服务启动在 0.0.0.0:%s", port)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("❌ 服务器启动失败: %v", err)
+		}
+	}()
+
+	// 12. 优雅关闭
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
