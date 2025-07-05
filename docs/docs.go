@@ -2697,7 +2697,7 @@ const docTemplate = `{
                     {
                         "enum": [
                             "pending",
-                            "succeeded",
+                            "success",
                             "refunded",
                             "failed"
                         ],

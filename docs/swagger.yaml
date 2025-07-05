@@ -2580,7 +2580,7 @@ paths:
       - description: 支付状态
         enum:
         - pending
-        - succeeded
+        - success
         - refunded
         - failed
         in: query

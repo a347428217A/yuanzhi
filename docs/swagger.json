@@ -2691,7 +2691,7 @@
                     {
                         "enum": [
                             "pending",
-                            "succeeded",
+                            "success",
                             "refunded",
                             "failed"
                         ],
