@@ -1,6 +1,6 @@
 # 项目启动端口
 server:
-  address: :8080
+  address: :80
   # debug模式
   model: debug
   # release模式
@@ -30,7 +30,7 @@ imageSettings:
   # 本地磁盘地址
   uploadDir: /appointment_db/upload/
   # 本地ip地址
-  imageHost: http://localhost:8080
+  imageHost: http://localhost:80
 
 # log日志配置
 log:

@@ -1,52 +1,74 @@
-# 使用多阶段构建减小镜像大小
+# 阶段一：构建应用
 FROM golang:1.23-alpine AS builder
 
 # 设置工作目录
-WORKDIR /app
+WORKDIR /usr/src/app
 
-# 复制依赖文件并下载
+# 1. 复制依赖定义文件
 COPY go.mod go.sum ./
-RUN go mod download
 
-# 复制源代码（排除不需要的文件）
+# 下载依赖（使用国内代理加速）
+RUN go env -w GOPROXY=https://goproxy.cn,direct && \
+    go mod download
+
+# 2. 复制所有源代码和文件
 COPY . .
 
-# 构建应用（添加构建参数）
+# 3. 构建应用
 RUN CGO_ENABLED=0 GOOS=linux go build \
-    -ldflags="-w -s" \  # 减小二进制文件大小
-    -o admin-api .
+    -ldflags="-w -s" \
+    -trimpath \
+    -o /usr/local/bin/admin-api .
 
-# 创建最终镜像
+# 阶段二：创建生产镜像
 FROM alpine:3.18
 
-# 安装CA证书（用于HTTPS请求）并设置时区
-RUN apk --no-cache add ca-certificates tzdata && \
-    cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+# 安装基础依赖
+RUN apk add --no-cache \
+    ca-certificates \
+    tzdata
+
+# 设置上海时区
+RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     echo "Asia/Shanghai" > /etc/timezone
+
+# 创建非 root 用户
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup -h /app
 
 # 设置工作目录
 WORKDIR /app
+RUN chown -R appuser:appgroup /app
+USER appuser
 
-# 从构建阶段复制二进制文件
-COPY --from=builder /app/admin-api .
+# 4. 复制二进制文件
+COPY --from=builder --chown=appuser:appgroup /usr/local/bin/admin-api .
 
-# 创建配置文件目录（关键修复）
-RUN mkdir -p /app/config
+# 5. 复制配置文件（关键）
+COPY --from=builder --chown=appuser:appgroup /usr/src/app/config.yaml .
 
-# 复制配置文件（确保配置文件存在）
-COPY --from=builder /app/config.yaml /app/config/config.yaml
+# 6. 复制所有必需目录（确保完整结构）
+COPY --from=builder --chown=appuser:appgroup /usr/src/app/certs ./certs/
+COPY --from=builder --chown=appuser:appgroup /usr/src/app/docs ./docs/
+COPY --from=builder --chown=appuser:appgroup /usr/src/app/common ./common/
+COPY --from=builder --chown=appuser:appgroup /usr/src/app/config ./config/
+COPY --from=builder --chown=appuser:appgroup /usr/src/app/controllers ./controllers/
+COPY --from=builder --chown=appuser:appgroup /usr/src/app/database ./database/
+COPY --from=builder --chown=appuser:appgroup /usr/src/app/middlewares ./middlewares/
+COPY --from=builder --chown=appuser:appgroup /usr/src/app/models ./models/
+COPY --from=builder --chown=appuser:appgroup /usr/src/app/payment ./payment/
+COPY --from=builder --chown=appuser:appgroup /usr/src/app/pkg ./pkg/
+COPY --from=builder --chown=appuser:appgroup /usr/src/app/routes ./routes/
+COPY --from=builder --chown=appuser:appgroup /usr/src/app/utils ./utils/
 
-# 复制预先生成的 Swagger 文档
-COPY --from=builder /app/docs ./docs
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
+    CMD wget -q --spider http://localhost:${PORT}/health || exit 1
 
-# 设置健康检查（微信云托管要求）
-HEALTHCHECK --interval=30s --timeout=3s \
-  CMD wget -qO- http://localhost:$PORT/health || exit 1
-
-# 暴露端口（微信云托管默认使用80端口）
+# 暴露端口
 EXPOSE 80
 
-# 设置环境变量（微信云托管会注入PORT环境变量）
+# 设置环境变量
 ENV PORT=80
-# 启动应用（使用exec形式）
-CMD ["./admin-api"]
+
+# 启动应用
+CMD ["/app/admin-api"]

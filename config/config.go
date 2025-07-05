@@ -12,8 +12,7 @@ package config
 
 import (
 	"gopkg.in/yaml.v2"
-	"os"
-	"path/filepath"
+	"io/ioutil"
 )
 
 type WechatPayConfig struct {
@@ -80,96 +79,19 @@ type payment struct {
 
 var Config *config
 
-// 添加全局初始化标志
-var initialized bool
-
-// 配置初始化（改为可调用的函数）
-func Init(configPath string) {
-	// 如果已经初始化则跳过
-	if initialized {
-		return
-	}
-
-	// 1. 确定最终配置文件路径
-	finalPath := resolveConfigPath(configPath)
-	//log.Printf("🔧 加载配置文件: %s", finalPath)
-
-	// 2. 读取配置文件
-	yamlFile, err := os.ReadFile(finalPath)
+// 配置初始化
+func init() {
+	yamlFile, err := ioutil.ReadFile("./config.yaml")
+	// 有错就down机
 	if err != nil {
-		//log.Fatalf("❌ 读取配置文件失败: %s | %v", finalPath, err)
+		panic(err)
 	}
-
-	// 3. 解析配置
+	// 绑定值
 	err = yaml.Unmarshal(yamlFile, &Config)
 	if err != nil {
-		//log.Fatalf("❌ 解析配置文件失败: %v", err)
+		panic(err)
 	}
-
-	//log.Printf("✅ 配置文件加载成功")
-	initialized = true
 }
-
-// 解析配置文件路径
-func resolveConfigPath(userPath string) string {
-	// 1. 优先使用用户指定的路径
-	if userPath != "" {
-		return userPath
-	}
-
-	// 2. 尝试环境变量指定路径
-	if envPath := os.Getenv("CONFIG_PATH"); envPath != "" {
-		return envPath
-	}
-
-	// 3. 尝试当前工作目录
-	if cwd, err := os.Getwd(); err == nil {
-		defaultPath := filepath.Join(cwd, "config.yaml")
-		if _, err := os.Stat(defaultPath); err == nil {
-			return defaultPath
-		}
-	}
-
-	// 4. 尝试可执行文件所在目录
-	if exePath, err := os.Executable(); err == nil {
-		exeDir := filepath.Dir(exePath)
-		defaultPath := filepath.Join(exeDir, "config.yaml")
-		if _, err := os.Stat(defaultPath); err == nil {
-			return defaultPath
-		}
-	}
-
-	// 5. 尝试常用位置
-	commonPaths := []string{
-		"/etc/app/config.yaml",
-		"/app/config.yaml",
-		"/config/config.yaml",
-	}
-	for _, p := range commonPaths {
-		if _, err := os.Stat(p); err == nil {
-			return p
-		}
-	}
-
-	//log.Fatal("❌ 无法找到配置文件，请通过环境变量 CONFIG_PATH 指定")
-	return "" // 不会执行到这里
-}
-
-//var Config *config
-//
-//// 配置初始化
-//func init() {
-//	yamlFile, err := ioutil.ReadFile("./config.yaml")
-//	// 有错就down机
-//	if err != nil {
-//		panic(err)
-//	}
-//	// 绑定值
-//	err = yaml.Unmarshal(yamlFile, &Config)
-//	if err != nil {
-//		panic(err)
-//	}
-//}
 
 //type Config struct {
 //	DBHost         string
