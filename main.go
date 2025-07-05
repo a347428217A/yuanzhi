@@ -63,9 +63,13 @@ func main() {
 	log.Println("✅ 数据库初始化完成")
 
 	// 6. 注册业务路由（必须先于健康检查！）
-	routes.SetupCustomerRoutes(router)
-	routes.SetupMerchantRoutes(router)
-	routes.SetupInternalRoutes(router)
+	routes.SetupInternalRoutes(router) // 先注册内部路由
+	routes.SetupMerchantRoutes(router) // 再注册商家路由
+	routes.SetupCustomerRoutes(router) // 最后注册客户路由
+
+	//routes.SetupCustomerRoutes(router)
+	//routes.SetupMerchantRoutes(router)
+	//routes.SetupInternalRoutes(router)
 
 	// 7. 添加健康检查端点
 	router.GET("/", func(c *gin.Context) {
