@@ -8,13 +8,8 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-# 安装 swag 工具
-RUN go install github.com/swaggo/swag/cmd/swag@latest
-
 # 复制源代码
 COPY . .
-
-# 生成 Swagger 文档 (关键修复!)
 RUN swag init
 
 # 构建应用
@@ -31,9 +26,14 @@ RUN apk --no-cache add ca-certificates tzdata && \
 # 设置工作目录
 WORKDIR /app
 
-# 从构建阶段复制二进制文件和 Swagger 文档
+# 从构建阶段复制二进制文件
 COPY --from=builder /app/admin-api .
-COPY --from=builder /app/docs ./docs  # 关键！
+
+# 暴露端口（微信云托管默认使用80端口）
+EXPOSE 80
+
+# 设置环境变量（微信云托管会注入PORT环境变量）
+ENV PORT=80
 
 # 启动应用
 CMD ["./admin-api"]
