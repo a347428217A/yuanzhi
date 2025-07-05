@@ -54,9 +54,7 @@ func main() {
 	mainRouter := gin.Default()
 
 	// 5. 添加Swagger路由
-	url := ginSwagger.URL("/swagger/doc.json") // 明确指定文档位置
-	mainRouter.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
-	//mainRouter.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	mainRouter.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	log.Printf("🔍 Swagger UI 可用: http://0.0.0.0:%s/swagger/index.html", port)
 
 	// 6. 设置路由
