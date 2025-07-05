@@ -18,9 +18,6 @@ var DB *gorm.DB
 func InitDB() {
 	// 1. 优先从环境变量获取配置
 	dbHost := os.Getenv("DB_HOST")
-	if dbHost == "" {
-		dbHost = "sh-cynosdbmysql-grp-71t9co2k.sql.tencentcdb.com"
-	}
 
 	dbPort := os.Getenv("DB_PORT")
 
