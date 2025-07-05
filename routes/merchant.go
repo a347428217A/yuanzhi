@@ -6,121 +6,107 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//func InitRouterMerchant() *gin.Engine {
-//	router := gin.New()
-//	// 跌机恢复
-//	router.Use(gin.Recovery())
-//	router.Use(middlewares.Cors())
-//	router.StaticFS(config.Config.ImageSettings.UploadDir, http.Dir(config.Config.ImageSettings.UploadDir))
-//	//router.Use(middlewares.Logger())
-//	SetupMerchantRoutes(router)
-//	return router
-//}
-
 func SetupMerchantRoutes(r *gin.Engine) {
-	// 商家端认证
-	auth := r.Group("/api/merchant")
+	// 公共路由组 (无需认证)
+	public := r.Group("/api/merchant")
 	{
-		auth.GET("/captcha", merchant.GetCaptcha)
-
-		// 登录路由添加防护
-		auth.POST("/login", middlewares.LoginGuardMiddleware(), merchant.Login)
+		public.GET("/captcha", merchant.GetCaptcha)
+		public.POST("/login", middlewares.LoginGuardMiddleware(), merchant.Login)
 	}
 
-	// 需要认证的路由
-	admin := auth.Group("")
-	admin.Use(middlewares.MerchantAuthMiddleware())
+	// 认证路由组 (需要商家认证)
+	auth := r.Group("/api/merchant")
+	auth.Use(middlewares.MerchantAuthMiddleware())
 	{
-		// 新增支付管理路由组
-		paymentGroup := admin.Group("/payments")
+		// 支付管理
+		paymentGroup := auth.Group("/payments")
 		{
-			paymentGroup.GET("", merchant.GetMerchantPayments)         // 获取商家支付记录
-			paymentGroup.GET("/:paymentId", merchant.GetPaymentDetail) // 获取支付详情
+			paymentGroup.GET("", merchant.GetMerchantPayments)
+			paymentGroup.GET("/:paymentId", merchant.GetPaymentDetail)
 		}
 
-		// 服务类别管理路由组 - 新增部分
-		categoryGroup := admin.Group("/categories")
+		// 服务类别
+		categoryGroup := auth.Group("/categories")
 		{
-			categoryGroup.POST("", merchant.AddServiceCategory)          // POST /api/merchant/categories
-			categoryGroup.GET("", merchant.GetServiceCategories)         // GET /api/merchant/categories
-			categoryGroup.PUT("/:id", merchant.UpdateServiceCategory)    // PUT /api/merchant/categories/{id}
-			categoryGroup.DELETE("/:id", merchant.DeleteServiceCategory) // DELETE /api/merchant/categories/{id}
+			categoryGroup.POST("", merchant.AddServiceCategory)
+			categoryGroup.GET("", merchant.GetServiceCategories)
+			categoryGroup.PUT("/:id", merchant.UpdateServiceCategory)
+			categoryGroup.DELETE("/:id", merchant.DeleteServiceCategory)
 		}
 
-		// 原有的其他路由组保持不变...
-		appointmentGroup := admin.Group("/appointments")
+		// 预约管理
+		appointmentGroup := auth.Group("/appointments")
 		{
-			appointmentGroup.GET("/", merchant.GetMerchantAppointments) // GET /api/merchant/appointments
+			appointmentGroup.GET("", merchant.GetMerchantAppointments)
 
-			// 特定预约
+			// 特定预约操作
 			specificAppointment := appointmentGroup.Group("/:appointmentId")
 			{
-				specificAppointment.PUT("/status", merchant.UpdateAppointmentStatus) // PUT /api/merchant/appointments/{appointmentId}/status
-
-				specificAppointment.POST("/refund", merchant.InitiateRefund) // 发起退款
+				specificAppointment.PUT("/status", merchant.UpdateAppointmentStatus)
+				specificAppointment.POST("/refund", merchant.InitiateRefund)
 			}
 		}
 
-		// 服务管理路由组 - 统一使用 :serviceId
-		serviceGroup := admin.Group("/services")
+		// 服务管理
+		serviceGroup := auth.Group("/services")
 		{
-			serviceGroup.GET("", merchant.GetMerchantServices) // GET /api/merchant/services
-			serviceGroup.POST("", merchant.CreateService)      // POST /api/merchant/services
+			serviceGroup.GET("", merchant.GetMerchantServices)
+			serviceGroup.POST("", merchant.CreateService)
 
-			// 特定服务
+			// 特定服务操作
 			specificService := serviceGroup.Group("/:serviceId")
 			{
-				specificService.PUT("", merchant.UpdateService)    // PUT /api/merchant/services/{serviceId}
-				specificService.DELETE("", merchant.DeleteService) // DELETE /api/merchant/services/{serviceId}
+				specificService.PUT("", merchant.UpdateService)
+				specificService.DELETE("", merchant.DeleteService)
 			}
 		}
 
-		// 员工管理路由组 - 统一使用 :staffId
-		staffGroup := admin.Group("/staff")
+		// 员工管理
+		staffGroup := auth.Group("/staff")
 		{
-			staffGroup.GET("", merchant.GetMerchantStaff) // GET /api/merchant/staff
-			staffGroup.POST("", merchant.CreateStaff)     // POST /api/merchant/staff
+			staffGroup.GET("", merchant.GetMerchantStaff)
+			staffGroup.POST("", merchant.CreateStaff)
 
-			// 特定员工
+			// 特定员工操作
 			specificStaff := staffGroup.Group("/:staffId")
 			{
-				specificStaff.PUT("", merchant.UpdateStaff)    // PUT /api/merchant/staff/{staffId}
-				specificStaff.DELETE("", merchant.DeleteStaff) // DELETE /api/merchant/staff/{staffId}
+				specificStaff.PUT("", merchant.UpdateStaff)
+				specificStaff.DELETE("", merchant.DeleteStaff)
 			}
 		}
 
-		// 时间管理路由组 - 统一使用 :timeslotId
-		timeslotGroup := admin.Group("/timeslots")
+		// 时间槽管理
+		timeslotGroup := auth.Group("/timeslots")
 		{
-			timeslotGroup.GET("", merchant.GetTimeSlots)                         // GET /api/merchant/timeslots
-			timeslotGroup.POST("/:staffId/batch", merchant.BatchCreateTimeSlots) // POST /api/merchant/timeslots/batch
+			timeslotGroup.GET("", merchant.GetTimeSlots)
+			timeslotGroup.POST("/:staffId/batch", merchant.BatchCreateTimeSlots)
 
-			// 特定时间槽
+			// 特定时间槽操作
 			specificTimeslot := timeslotGroup.Group("/:timeslotId")
 			{
-				specificTimeslot.DELETE("", merchant.DeleteTimeSlot) // DELETE /api/merchant/timeslots/{timeslotId}
+				specificTimeslot.DELETE("", merchant.DeleteTimeSlot)
 			}
 		}
 
-		// 优惠券管理路由组 - 统一使用 :couponTemplateId
-		couponGroup := admin.Group("/coupons")
+		// 优惠券管理
+		couponGroup := auth.Group("/coupons")
 		{
-			couponGroup.GET("", merchant.GetCouponTemplates)    // GET /api/merchant/coupons
-			couponGroup.POST("", merchant.CreateCouponTemplate) // POST /api/merchant/coupons
+			couponGroup.GET("", merchant.GetCouponTemplates)
+			couponGroup.POST("", merchant.CreateCouponTemplate)
 
-			// 特定优惠券模板
+			// 特定优惠券操作
 			specificCoupon := couponGroup.Group("/:couponTemplateId")
 			{
-				specificCoupon.PUT("", merchant.UpdateCouponTemplate)    // PUT /api/merchant/coupons/{couponTemplateId}
-				specificCoupon.DELETE("", merchant.DeleteCouponTemplate) // DELETE /api/merchant/coupons/{couponTemplateId}
+				specificCoupon.PUT("", merchant.UpdateCouponTemplate)
+				specificCoupon.DELETE("", merchant.DeleteCouponTemplate)
 			}
 		}
 
-		// 数据统计路由组
-		statsGroup := admin.Group("/stats")
+		// 数据统计
+		statsGroup := auth.Group("/stats")
 		{
-			statsGroup.GET("/appointments", merchant.GetAppointmentStats) // GET /api/merchant/stats/appointments
-			statsGroup.GET("/revenue", merchant.GetRevenueStats)          // GET /api/merchant/stats/revenue
+			statsGroup.GET("/appointments", merchant.GetAppointmentStats)
+			statsGroup.GET("/revenue", merchant.GetRevenueStats)
 		}
 	}
 }

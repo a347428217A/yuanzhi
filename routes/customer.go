@@ -6,101 +6,86 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// 初始化路由
-//func InitRouterCustomer() *gin.Engine {
-//	//router := gin.New()
-//	//// 跌机恢复
-//	//router.Use(gin.Recovery())
-//	//router.Use(middlewares.Cors())
-//	//router.StaticFS(config.Config.ImageSettings.UploadDir, http.Dir(config.Config.ImageSettings.UploadDir))
-//	////router.Use(middlewares.Logger())
-//	//SetupCustomerRoutes(router)
-//	//return router
-//
-//	router := gin.New()
-//	router.Use(gin.Recovery())
-//
-//	// 注意：移除了全局CORS中间件，因为Nginx层已处理跨域
-//	// router.Use(middlewares.Cors())
-//
-//	router.StaticFS(config.Config.ImageSettings.UploadDir, http.Dir(config.Config.ImageSettings.UploadDir))
-//	SetupCustomerRoutes(router)
-//	return router
-//}
-
 func SetupCustomerRoutes(r *gin.Engine) {
-	// 公共路由
+	// 公共路由组 (无需认证)
 	public := r.Group("/api/customer")
 	{
+		// 认证相关
 		public.POST("/login", customer.WechatLogin)
-		public.GET("/coupons/available", customer.GetAvailableCoupons)
-		public.GET("/banners", customer.GetBanners)
-		public.POST("/payments/notify", customer.HandlePaymentNotify)
 
-		// 商家相关路由组 - 统一使用 :merchantId
+		// 优惠券
+		public.GET("/coupons/available", customer.GetAvailableCoupons)
+
+		// 横幅
+		public.GET("/banners", customer.GetBanners)
+
+		// 支付回调
+		public.POST("/payments/notify", customer.HandlePaymentNotify)
+		public.POST("/payments/simulate-notify", customer.HandleSimulatePaymentNotify)
+
+		// 商家相关
 		merchantGroup := public.Group("/merchants")
 		{
-			merchantGroup.GET("", customer.GetRecommendedMerchants) // GET /api/customer/merchants
+			merchantGroup.GET("", customer.GetRecommendedMerchants)
 
-			// 特定商家路由组
+			// 特定商家
 			specificMerchant := merchantGroup.Group("/:merchantId")
 			{
-				specificMerchant.GET("", customer.GetMerchantDetail)                       // GET /api/customer/merchants/{merchantId}
-				specificMerchant.GET("/categories", customer.GetMerchantServiceCategories) // GET /api/customer/merchants/{merchantId}/categories
-				specificMerchant.GET("/services", customer.GetMerchantServices)            // GET /api/customer/merchants/{merchantId}/services
+				specificMerchant.GET("", customer.GetMerchantDetail)
+				specificMerchant.GET("/categories", customer.GetMerchantServiceCategories)
+				specificMerchant.GET("/services", customer.GetMerchantServices)
 			}
 		}
 
-		// 服务相关路由组 - 统一使用 :serviceId
+		// 服务相关
 		serviceGroup := public.Group("/services")
 		{
-			serviceGroup.GET("/:serviceId/staff", customer.GetServiceAvailableStaff) // GET /api/customer/services/{serviceId}/staff
+			serviceGroup.GET("/:serviceId/staff", customer.GetServiceAvailableStaff)
 		}
 	}
 
-	// 需要认证的路由
-	auth := public.Group("")
+	// 认证路由组 (需要客户认证)
+	auth := r.Group("/api/customer")
 	auth.Use(middlewares.CustomerAuthMiddleware())
 	{
+		// 用户资料
 		auth.PUT("/phone", customer.UpdatePhone)
 		auth.GET("/profile", customer.GetUserProfile)
-		public.POST("/payments/simulate-notify", customer.HandleSimulatePaymentNotify)
 
-		// 新增支付相关路由组
+		// 支付管理
 		paymentGroup := auth.Group("/payments")
 		{
-			paymentGroup.POST("", customer.CreatePayment)        // 创建支付订单
-			paymentGroup.GET("/:paymentId", customer.GetPayment) // 查询支付状态
+			paymentGroup.POST("", customer.CreatePayment)
+			paymentGroup.GET("/:paymentId", customer.GetPayment)
 		}
 
-		// 预约路由组 - 统一使用 :appointmentId
+		// 预约管理
 		appointmentGroup := auth.Group("/appointments")
 		{
-			appointmentGroup.GET("", customer.GetUserAppointments) // GET /api/customer/appointments
-			appointmentGroup.POST("", customer.CreateAppointment)  // POST /api/customer/appointments
+			appointmentGroup.GET("", customer.GetUserAppointments)
+			appointmentGroup.POST("", customer.CreateAppointment)
 
-			// 特定预约
+			// 特定预约操作
 			specificAppointment := appointmentGroup.Group("/:appointmentId")
 			{
-				specificAppointment.GET("", customer.GetAppointmentDetail)     // GET /api/customer/appointments/{appointmentId}
-				specificAppointment.PUT("/cancel", customer.CancelAppointment) // PUT /api/customer/appointments/{appointmentId}/cancel
-
+				specificAppointment.GET("", customer.GetAppointmentDetail)
+				specificAppointment.PUT("/cancel", customer.CancelAppointment)
 				specificAppointment.POST("/pay", customer.PayForAppointment)
 			}
 		}
 
-		// 时间槽路由组
+		// 时间槽
 		timeslotGroup := auth.Group("/timeslots")
 		{
-			timeslotGroup.GET("/dates", customer.GetAvailableDates) // GET /api/customer/timeslots/dates
-			timeslotGroup.GET("", customer.GetTimeSlots)            // GET /api/customer/timeslots
+			timeslotGroup.GET("/dates", customer.GetAvailableDates)
+			timeslotGroup.GET("", customer.GetTimeSlots)
 		}
 
-		// 优惠券路由组 - 统一使用 :couponTemplateId
+		// 优惠券
 		couponGroup := auth.Group("/coupons")
 		{
-			couponGroup.GET("", customer.GetUserCoupons)                       // GET /api/customer/coupons
-			couponGroup.POST("/:couponTemplateId/claim", customer.ClaimCoupon) // POST /api/customer/coupons/{couponTemplateId}/claim
+			couponGroup.GET("", customer.GetUserCoupons)
+			couponGroup.POST("/:couponTemplateId/claim", customer.ClaimCoupon)
 		}
 	}
 }
