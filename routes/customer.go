@@ -1,25 +1,32 @@
 package routes
 
 import (
-	"admin-api/config"
 	"admin-api/controllers/customer"
 	"admin-api/middlewares"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 )
 
 // 初始化路由
-func InitRouterCustomer() *gin.Engine {
-	router := gin.New()
-	// 跌机恢复
-	router.Use(gin.Recovery())
-	router.Use(middlewares.Cors())
-	router.StaticFS(config.Config.ImageSettings.UploadDir, http.Dir(config.Config.ImageSettings.UploadDir))
-	//router.Use(middlewares.Logger())
-	SetupCustomerRoutes(router)
-	return router
-}
+//func InitRouterCustomer() *gin.Engine {
+//	//router := gin.New()
+//	//// 跌机恢复
+//	//router.Use(gin.Recovery())
+//	//router.Use(middlewares.Cors())
+//	//router.StaticFS(config.Config.ImageSettings.UploadDir, http.Dir(config.Config.ImageSettings.UploadDir))
+//	////router.Use(middlewares.Logger())
+//	//SetupCustomerRoutes(router)
+//	//return router
+//
+//	router := gin.New()
+//	router.Use(gin.Recovery())
+//
+//	// 注意：移除了全局CORS中间件，因为Nginx层已处理跨域
+//	// router.Use(middlewares.Cors())
+//
+//	router.StaticFS(config.Config.ImageSettings.UploadDir, http.Dir(config.Config.ImageSettings.UploadDir))
+//	SetupCustomerRoutes(router)
+//	return router
+//}
 
 func SetupCustomerRoutes(r *gin.Engine) {
 	// 公共路由

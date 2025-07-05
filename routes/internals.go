@@ -1,24 +1,21 @@
 package routes
 
 import (
-	"admin-api/config"
 	"admin-api/controllers"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 )
 
-func InitRouterInternal() *gin.Engine {
-	router := gin.New()
-	router.Use(gin.Recovery())
-
-	// 注意：移除了全局CORS中间件，因为Nginx层已处理跨域
-	// router.Use(middlewares.Cors())
-
-	router.StaticFS(config.Config.ImageSettings.UploadDir, http.Dir(config.Config.ImageSettings.UploadDir))
-	SetupInternalRoutes(router)
-	return router
-}
+//func InitRouterInternal() *gin.Engine {
+//	router := gin.New()
+//	router.Use(gin.Recovery())
+//
+//	// 注意：移除了全局CORS中间件，因为Nginx层已处理跨域
+//	// router.Use(middlewares.Cors())
+//
+//	router.StaticFS(config.Config.ImageSettings.UploadDir, http.Dir(config.Config.ImageSettings.UploadDir))
+//	SetupInternalRoutes(router)
+//	return router
+//}
 
 func SetupInternalRoutes(r *gin.Engine) {
 	// 主内部路由组
