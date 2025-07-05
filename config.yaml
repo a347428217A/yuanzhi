@@ -1,0 +1,56 @@
+# 项目启动端口
+server:
+  address: :8080
+  # debug模式
+  model: debug
+  # release模式
+  #model:release
+
+# 数据库配置
+db:
+  dialects: mysql
+  host: 127.0.0.1
+  port: 3306
+  db: appointment_db
+  username: root
+  password: a893782064A.
+  charset: utf8
+  # 最大空闲数
+  maxIdle: 50
+  # 最大连接数
+  maxOpen: 150
+
+# redis配置
+redis:
+  address: 127.0.0.1:6379
+#  password: 123456
+
+# 图片地址和ip
+imageSettings:
+  # 本地磁盘地址
+  uploadDir: /appointment_db/upload/
+  # 本地ip地址
+  imageHost: http://localhost:8080
+
+# log日志配置
+log:
+  path: ./log
+  name: sys
+  # 输出到控制台
+  model: console
+  # 输出到文件
+  # model: file
+
+
+#微信支付配置
+wechat_pay:
+  app_id: "wx10ca8858028379ec"
+  mch_id: "1655179573"
+  api_key: "232fc9c655456253aed21efb6b230df3"
+  cert_path: "./certs/apiclient_cert.pem"
+  key_path: "./certs/apiclient_key.pem"
+  notify_url: "https://qd9nvnv3-8080.asse.devtunnels.ms/api/customer/payments/notify"
+  use_simulate: true
+
+
+

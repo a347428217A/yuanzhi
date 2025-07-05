@@ -1,0 +1,6 @@
+vendor/
+.git/
+*.log
+*.swp
+.DS_Store
+.env
