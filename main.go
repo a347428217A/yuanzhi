@@ -1,6 +1,7 @@
 package main
 
 import (
+	"admin-api/config"
 	"admin-api/database"
 	_ "admin-api/docs"
 	"admin-api/routes"
@@ -26,6 +27,8 @@ import (
 // @in header
 // @name Authorization
 func main() {
+
+	config.Init("")
 	// 1. 从环境变量获取端口
 	port := os.Getenv("PORT")
 	if port == "" {

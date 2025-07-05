@@ -8,16 +8,18 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-# 复制源代码
+# 复制源代码（排除不需要的文件）
 COPY . .
 
-# 构建应用
-RUN CGO_ENABLED=0 GOOS=linux go build -o admin-api .
+# 构建应用（添加构建参数）
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags="-w -s" \  # 减小二进制文件大小
+    -o admin-api .
 
 # 创建最终镜像
 FROM alpine:3.18
 
-# 安装CA证书（用于HTTPS请求）
+# 安装CA证书（用于HTTPS请求）并设置时区
 RUN apk --no-cache add ca-certificates tzdata && \
     cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     echo "Asia/Shanghai" > /etc/timezone
@@ -28,14 +30,25 @@ WORKDIR /app
 # 从构建阶段复制二进制文件
 COPY --from=builder /app/admin-api .
 
+# 创建配置文件目录（关键修复）
+RUN mkdir -p /app/config
+
+# 复制配置文件（确保配置文件存在）
+COPY --from=builder /app/config.yaml /app/config/config.yaml
+
 # 复制预先生成的 Swagger 文档
 COPY --from=builder /app/docs ./docs
+
+# 设置健康检查（微信云托管要求）
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD wget -qO- http://localhost:$PORT/health || exit 1
 
 # 暴露端口（微信云托管默认使用80端口）
 EXPOSE 80
 
 # 设置环境变量（微信云托管会注入PORT环境变量）
-ENV PORT=80
+ENV PORT=80 \
+    CONFIG_PATH=/app/config/config.yaml  # 关键修复：显式指定配置文件路径
 
-# 启动应用
+# 启动应用（使用exec形式）
 CMD ["./admin-api"]
