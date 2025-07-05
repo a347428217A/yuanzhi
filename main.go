@@ -22,7 +22,7 @@ import (
 // @title Appointment System API
 // @version 1.0
 // @description 预约系统API文档
-// @host https://user-go-api-171613-8-1367826874.sh.run.tcloudbase.com
+// @host user-go-api-171613-8-1367826874.sh.run.tcloudbase.com
 // @BasePath /
 // @securityDefinitions.apikey ApiKeyAuth
 // @in header
@@ -39,6 +39,18 @@ func main() {
 
 	// 2. 创建唯一的路由器实例
 	router := gin.Default()
+
+	router.Use(func(c *gin.Context) {
+		// 从腾讯云托管获取真实主机名
+		realHost := c.GetHeader("X-Forwarded-Host")
+		if realHost == "" {
+			realHost = c.Request.Host
+		}
+
+		// 设置正确的请求主机
+		c.Request.Host = realHost
+		c.Next()
+	})
 
 	router.Use(middlewares.Cors())
 
