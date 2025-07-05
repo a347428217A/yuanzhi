@@ -31,7 +31,7 @@ func main() {
 	// 1. 从环境变量获取端口
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "80"
+		port = "8080"
 		log.Printf("⚠️ 使用默认端口: %s", port)
 	} else {
 		log.Printf("✅ 使用环境变量端口: %s", port)
