@@ -47,8 +47,6 @@ HEALTHCHECK --interval=30s --timeout=3s \
 EXPOSE 80
 
 # 设置环境变量（微信云托管会注入PORT环境变量）
-ENV PORT=80 \
-    CONFIG_PATH=/app/config/config.yaml  # 关键修复：显式指定配置文件路径
-
+ENV PORT=80
 # 启动应用（使用exec形式）
 CMD ["./admin-api"]
