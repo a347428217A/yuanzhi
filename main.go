@@ -3,6 +3,15 @@ package main
 import (
 	"admin-api/database"
 	_ "admin-api/docs"
+	"admin-api/routes"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"log"
+	"net/http"
+	"os/signal"
+	"syscall"
+	"time"
+
 	//"fmt"
 	"github.com/gin-gonic/gin"
 	"os"
@@ -36,31 +45,31 @@ func main() {
 	//}
 
 	database.InitDB()
-	//mainRouter := gin.Default()
-	//mainRouter.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	//routes.SetupCustomerRoutes(mainRouter)
-	//routes.SetupMerchantRoutes(mainRouter)
-	//routes.SetupInternalRoutes(mainRouter)
-	//
-	//server := &http.Server{
-	//	Addr:         ":" + port, // 关键修改：使用环境变量端口
-	//	Handler:      mainRouter,
-	//	ReadTimeout:  15 * time.Second,
-	//	WriteTimeout: 30 * time.Second,
-	//	IdleTimeout:  60 * time.Second,
-	//}
-	//
-	//go func() {
-	//	log.Printf("🚀 服务启动在 http://0.0.0.0:%s", port)
-	//	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-	//		log.Fatalf("❌ 服务器启动失败: %v", err)
-	//	}
-	//}()
-	//
-	//quit := make(chan os.Signal, 1)
-	//signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	//<-quit
-	//log.Println("🛑 接收到关闭信号，开始优雅关闭...")
+	mainRouter := gin.Default()
+	mainRouter.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	routes.SetupCustomerRoutes(mainRouter)
+	routes.SetupMerchantRoutes(mainRouter)
+	routes.SetupInternalRoutes(mainRouter)
+
+	server := &http.Server{
+		Addr:         ":" + port, // 关键修改：使用环境变量端口
+		Handler:      mainRouter,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	go func() {
+		log.Printf("🚀 服务启动在 http://0.0.0.0:%s", port)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("❌ 服务器启动失败: %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("🛑 接收到关闭信号，开始优雅关闭...")
 
 	//ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	//defer cancel()
