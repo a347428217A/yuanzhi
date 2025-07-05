@@ -19,7 +19,7 @@ func InitDB() {
 	// 1. 优先从环境变量获取配置
 	dbHost := os.Getenv("DB_HOST")
 	if dbHost == "" {
-		dbHost = "10.9.106.244"
+		dbHost = "10.6.109.205"
 	}
 
 	dbPort := os.Getenv("DB_PORT")
@@ -29,12 +29,12 @@ func InitDB() {
 
 	dbUser := os.Getenv("DB_USER")
 	if dbUser == "" {
-		dbUser = "zoufy"
+		dbUser = "root"
 	}
 
 	dbPass := os.Getenv("DB_PASSWORD")
 	if dbPass == "" {
-		dbPass = "a893782064A."
+		dbPass = "a893782064A!"
 	}
 
 	dbName := os.Getenv("DB_NAME")
