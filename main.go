@@ -3,6 +3,7 @@ package main
 import (
 	"admin-api/database"
 	_ "admin-api/docs"
+	"admin-api/middlewares"
 	"admin-api/routes"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -39,6 +40,8 @@ func main() {
 	// 2. 创建唯一的路由器实例
 	router := gin.Default()
 
+	router.Use(middlewares.Cors())
+
 	// 3. 添加健康检查端点（必须放在最前面）
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok", "service": "admin-api"})
@@ -54,6 +57,15 @@ func main() {
 			"status":   "ok",
 			"database": dbStatus,
 		})
+	})
+
+	router.Use(func(c *gin.Context) {
+		if c.Request.Header.Get("X-Forwarded-Proto") == "http" {
+			target := "https://" + c.Request.Host + c.Request.URL.Path
+			c.Redirect(http.StatusMovedPermanently, target)
+			return
+		}
+		c.Next()
 	})
 
 	// 4. 初始化数据库
@@ -80,6 +92,12 @@ func main() {
 			log.Fatalf("❌ 服务器启动失败: %v", err)
 		}
 	}()
+
+	log.Println("===== 注册的路由 =====")
+	for _, route := range router.Routes() {
+		log.Printf("%-6s %s", route.Method, route.Path)
+	}
+	log.Println("======================")
 
 	// 8. 优雅关闭
 	quit := make(chan os.Signal, 1)
