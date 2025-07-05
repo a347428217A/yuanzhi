@@ -23,24 +23,12 @@ func InitDB() {
 	}
 
 	dbPort := os.Getenv("DB_PORT")
-	if dbPort == "" {
-		dbPort = "27308"
-	}
 
 	dbUser := os.Getenv("DB_USER")
-	if dbUser == "" {
-		dbUser = "zoufy"
-	}
 
 	dbPass := os.Getenv("DB_PASSWORD")
-	if dbPass == "" {
-		dbPass = "a893782064A."
-	}
 
 	dbName := os.Getenv("DB_NAME")
-	if dbName == "" {
-		dbName = "appintment_db"
-	}
 
 	// 2. 构建DSN（添加关键参数）
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?"+
