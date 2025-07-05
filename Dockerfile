@@ -65,10 +65,10 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
     CMD wget -q --spider http://localhost:${PORT}/health || exit 1
 
 # 暴露端口
-EXPOSE 8080
+EXPOSE 80
 
 # 设置环境变量
-ENV PORT=8080
+ENV PORT=80
 
 # 启动应用
 CMD ["/app/admin-api"]

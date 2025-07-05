@@ -22,7 +22,7 @@ import (
 // @title Appointment System API
 // @version 1.0
 // @description 预约系统API文档
-// @host user-go-api-171613-8-1367826874.sh.run.tcloudbase.com
+// @host localhost:8080
 // @BasePath /
 // @securityDefinitions.apikey ApiKeyAuth
 // @in header
@@ -31,7 +31,7 @@ func main() {
 	// 1. 从环境变量获取端口
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "80"
 		log.Printf("⚠️ 使用默认端口: %s", port)
 	} else {
 		log.Printf("✅ 使用环境变量端口: %s", port)
@@ -39,18 +39,6 @@ func main() {
 
 	// 2. 创建唯一的路由器实例
 	router := gin.Default()
-
-	router.Use(func(c *gin.Context) {
-		// 从腾讯云托管获取真实主机名
-		realHost := c.GetHeader("X-Forwarded-Host")
-		if realHost == "" {
-			realHost = c.Request.Host
-		}
-
-		// 设置正确的请求主机
-		c.Request.Host = realHost
-		c.Next()
-	})
 
 	router.Use(middlewares.Cors())
 
@@ -72,21 +60,6 @@ func main() {
 	})
 
 	//router.Use(func(c *gin.Context) {
-	//	if c.Request.Header.Get("X-Forwarded-Proto") == "http" {
-	//		target := "https://" + c.Request.Host + c.Request.URL.Path
-	//		c.Redirect(http.StatusMovedPermanently, target)
-	//		return
-	//	}
-	//	c.Next()
-	//})
-
-	//router.Use(func(c *gin.Context) {
-	//	// 跳过所有 API 路由（只重定向非 API 请求）
-	//	if strings.HasPrefix(c.Request.URL.Path, "/api") {
-	//		c.Next()
-	//		return
-	//	}
-	//
 	//	if c.Request.Header.Get("X-Forwarded-Proto") == "http" {
 	//		target := "https://" + c.Request.Host + c.Request.URL.Path
 	//		c.Redirect(http.StatusMovedPermanently, target)
